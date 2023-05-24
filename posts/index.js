@@ -9,9 +9,7 @@ app.use(bodyParser.json());
 app.use(cors());
 console.log("bodyparser=", bodyParser)
 
-const posts = {
-
-}
+const posts = {}
 
 app.get("/posts", (req, res) => {
     console.log("get")
@@ -22,14 +20,18 @@ app.post("/posts", async (req, res) => {
     const id = randomBytes(4).toString('hex');
     const {title} = req.body;
     posts[id] = {title, id};
-    console.log("posts", JSON.stringify(posts, null ,2));
+    console.log("posts", JSON.stringify(posts, null, 2));
 
-    await axios.post('http://localhost:4005/events', {
-        type: 'PostCreated',
-        data: {
-            id, title
-        }
-    }).catch(err => {console.error(err)})
+    try {
+        await axios.post('http://localhost:4005/events', {
+            type: 'PostCreated',
+            data: {
+                id, title
+            }
+        })
+    } catch (e) {
+        console.error(e);
+    }
     res.status(201).send(posts[id]);
 
 });

@@ -9,9 +9,7 @@ app.use(bodyParser.json());
 app.use(cors())
 console.log("bodyparser=", bodyParser)
 
-const commentsByPostId = {
-
-}
+const commentsByPostId = {}
 
 app.get("/posts/:id/comments", (req, res) => {
     console.log("get")
@@ -27,15 +25,19 @@ app.post("/posts/:id/comments", async (req, res) => {
     comments.push({id: commentId, content, status: 'pending'})
     commentsByPostId[req.params.id] = comments;
 
-    await axios.post("http://localhost:4005/events",{
-        type: "CommentCreated",
-        data: {
-            id: commentId,
-            content,
-            postId: req.params.id,
-            status: 'pending'
-        }
-    }).catch(err => {console.error(err)});
+    try {
+        await axios.post("http://localhost:4005/events", {
+            type: "CommentCreated",
+            data: {
+                id: commentId,
+                content,
+                postId: req.params.id,
+                status: 'pending'
+            }
+        })
+    } catch (e) {
+        console.error(e);
+    }
     res.status(201).send(comments);
 
 });
@@ -44,7 +46,7 @@ app.post("/events", async (req, res) => {
     console.log("have an event for you: ", req.body.type);
     const {type, data} = req.body;
 
-    if  (type === "CommentModerated") {
+    if (type === "CommentModerated") {
         console.log("we got a comment moderated event!")
         const {postId, id, status, content} = data;
         console.log("postId from commentModerated event: ", postId);
@@ -57,20 +59,19 @@ app.post("/events", async (req, res) => {
         if (!comment) {
             console.log("uh oh couldnt find the comment. ");
             console.log(`looking with id: ${id}`);
-            console.log("all comment ids: ", comments.map(com=>com.id).join(", "))
+            console.log("all comment ids: ", comments.map(com => com.id).join(", "))
         }
         comment.status = status;
         try {
-
-        await axios.post("http://localhost:4005/events", {
-            type: 'CommentUpdated',
-            data: {
-                id,
-                status,
-                postId,
-                content
-            }
-        }).catch(err => {console.error(err)});
+            await axios.post("http://localhost:4005/events", {
+                type: 'CommentUpdated',
+                data: {
+                    id,
+                    status,
+                    postId,
+                    content
+                }
+            });
         } catch (someError) {
             console.error("WE GOT AN ERROR...", someError);
         }
