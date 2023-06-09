@@ -23,7 +23,7 @@ app.post("/posts", async (req, res) => {
     console.log("posts", JSON.stringify(posts, null, 2));
 
     try {
-        await axios.post('http://localhost:4005/events', {
+        await axios.post('http://event-bus-srv:4005/events', {
             type: 'PostCreated',
             data: {
                 id, title
@@ -42,5 +42,6 @@ app.post("/events", (req, res) => {
 })
 
 app.listen(4000, () => {
-    console.log("hello im listening on 4000")
+    console.log("v55")
+    console.log("posts listening on 4000")
 })
