@@ -12,16 +12,17 @@ console.log("bodyparser=", bodyParser)
 const posts = {}
 
 app.get("/posts", (req, res) => {
-    console.log("get")
+    console.log("GET /posts")
     res.send(posts);
 });
 
 app.post("/posts", async (req, res) => {
+    console.log("POST /posts")
     const id = randomBytes(4).toString('hex');
     const {title} = req.body;
     posts[id] = {title, id};
-    console.log("posts", JSON.stringify(posts, null, 2));
-
+    console.log("new post: ", JSON.stringify(posts[id], null, 2));
+    console.log("Sending PostCreated to event bus");
     try {
         await axios.post('http://event-bus-srv:4005/events', {
             type: 'PostCreated',
@@ -33,15 +34,15 @@ app.post("/posts", async (req, res) => {
         console.error(e);
     }
     res.status(201).send(posts[id]);
-
 });
 
 app.post("/events", (req, res) => {
-    console.log("have an event for you: ", req.body.type);
+    console.log("POST /events")
+    console.log("new event of type: ", req.body.type);
     res.send({});
 })
 
 app.listen(4000, () => {
-    console.log("v55")
+    console.log("v55");
     console.log("posts listening on 4000")
 })

@@ -7,17 +7,16 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 app.use(cors())
-console.log("bodyparser=", bodyParser)
 
 const commentsByPostId = {}
 
 app.get("/posts/:id/comments", (req, res) => {
-    console.log("get")
+    console.log(`GET /posts/${req.params.id}/comments`);
     res.send(commentsByPostId[req.params.id] || []);
 });
 
 app.post("/posts/:id/comments", async (req, res) => {
-    console.log("post")
+    console.log(`POST /posts/${req.params.id}/comments`);
     const commentId = randomBytes(4).toString('hex');
     const {content} = req.body;
 
@@ -26,7 +25,8 @@ app.post("/posts/:id/comments", async (req, res) => {
     commentsByPostId[req.params.id] = comments;
 
     try {
-        await axios.post("http://localhost:4005/events", {
+        console.log("Emitting CommentCreated Event")
+        await axios.post("http://event-bus-srv:4005/events", {
             type: "CommentCreated",
             data: {
                 id: commentId,
@@ -43,27 +43,20 @@ app.post("/posts/:id/comments", async (req, res) => {
 });
 
 app.post("/events", async (req, res) => {
-    console.log("have an event for you: ", req.body.type);
+    console.log("New Event: ", req.body.type);
     const {type, data} = req.body;
 
     if (type === "CommentModerated") {
-        console.log("we got a comment moderated event!")
+        console.log("Received a comment moderated event!")
         const {postId, id, status, content} = data;
-        console.log("postId from commentModerated event: ", postId);
-        console.log("all our post ids we have: ", Object.keys(commentsByPostId).join(", "));
-        console.log("commentsByPostId: ", JSON.stringify(commentsByPostId, null, 2))
         const comments = commentsByPostId[postId];
         const comment = comments.find(com => {
             return com.id === id;
         });
-        if (!comment) {
-            console.log("uh oh couldnt find the comment. ");
-            console.log(`looking with id: ${id}`);
-            console.log("all comment ids: ", comments.map(com => com.id).join(", "))
-        }
         comment.status = status;
         try {
-            await axios.post("http://localhost:4005/events", {
+            console.log("Emitting CommentUpdated event");
+            await axios.post("http://event-bus-srv:4005/events", {
                 type: 'CommentUpdated',
                 data: {
                     id,
@@ -80,5 +73,5 @@ app.post("/events", async (req, res) => {
 })
 
 app.listen(4001, () => {
-    console.log("hello im listening on 4001")
+    console.log("Comments listening on 4001");
 })
