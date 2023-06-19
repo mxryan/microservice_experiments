@@ -16,8 +16,11 @@ app.get("/posts", (req, res) => {
     res.send(posts);
 });
 
-app.post("/posts", async (req, res) => {
-    console.log("POST /posts")
+// cant use just /posts because it conflicts with GET /posts in queryService
+// even though they are different HTTP verbs. ingress-nginx doesnt support
+// verb-based discrimination... only the route itself matters
+app.post("/posts/create", async (req, res) => {
+    console.log("POST /posts/create")
     const id = randomBytes(4).toString('hex');
     const {title} = req.body;
     posts[id] = {title, id};
